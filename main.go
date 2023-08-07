@@ -108,7 +108,7 @@ func main() {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Просто отправь мне название города и я покажу тебе погоду!")
 			bot.Send(msg)
 		} else {
-			city :=/////////////////////////////////////////////////////////////////////////////////////
+			city :=//////////////////////////////////
 			weatherData := GetWeather(city, "e71cc7509ba7040322d574ebdad1b5c3")
 			go GetWeather(city, "e71cc7509ba7040322d574ebdad1b5c3")
 
@@ -129,3 +129,4 @@ func main() {
 		}
 	}
 }
+
