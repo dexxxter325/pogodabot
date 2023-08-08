@@ -14,7 +14,7 @@ const (
 	openWeatherMapAPI = "e71cc7509ba7040322d574ebdad1b5c3"
 )
 
-func GetWeather(city string, openWeatherMapAPI string) {
+func GetWeather(city string, openWeatherMapAPI string) string {
 	url := "https://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + openWeatherMapAPI + "&units=metric"
 	res, err := http.Get(url)
 	if err != nil {
@@ -51,7 +51,7 @@ func GetWeather(city string, openWeatherMapAPI string) {
 	sunsetTimestamp := time.Unix(int64(data["sys"].(map[string]interface{})["sunset"].(float64)), 0)
 	lengthOfDay := sunsetTimestamp.Sub(sunriseTimestamp)
 
-	fmt.Printf("***%s***\nПогода в городе: %s\nТемпература: %.2fC° %s\nВлажность: %.0f%%\nДавление: %.0f мм.рт.ст\nВетер: %.2f м/с\nВосход солнца: %s\nЗакат солнца: %s\nПродолжительность дня: %s\nХорошего дня!",
+	weatherData := fmt.Sprintf("***%s***\nПогода в городе: %s\nТемпература: %.2fC° %s\nВлажность: %.0f%%\nДавление: %.0f мм.рт.ст\nВетер: %.2f м/с\nВосход солнца: %s\nЗакат солнца: %s\nПродолжительность дня: %s\nХорошего дня!",
 		time.Now().Format("2006-01-02 15:04"),
 		city,
 		curWeather,
@@ -63,6 +63,8 @@ func GetWeather(city string, openWeatherMapAPI string) {
 		sunsetTimestamp.Format("2006-01-02 15:04:05"),
 		lengthOfDay.String(),
 	)
+
+	return weatherData
 }
 
 var codeToSmile = map[string]string{
@@ -76,11 +78,6 @@ var codeToSmile = map[string]string{
 }
 
 func main() {
-	var city string
-
-	fmt.Print("Введите город: ")
-	fmt.Scanln(&city)
-	GetWeather(city, openWeatherMapAPI)
 
 	bot, err := tgbotapi.NewBotAPI("6537307160:AAEizhtTdKGu1ez5Jeb_uWjvfZg43GxTDaI")
 	if err != nil {
@@ -98,7 +95,6 @@ func main() {
 	updates := bot.GetUpdatesChan(u)
 
 	for update := range updates {
-
 		if update.Message.Text == "/start" {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, help)
 			bot.Send(msg)
@@ -107,21 +103,17 @@ func main() {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Просто отправь мне название города и я покажу тебе погоду!")
 			bot.Send(msg)
 		} else {
-			go GetWeather(city, "e71cc7509ba7040322d574ebdad1b5c3")
+			city := update.Message.Text
+			go GetWeather(city, openWeatherMapAPI)
+			weatherData := GetWeather(city, openWeatherMapAPI)
 
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("***%s***\nПогода в городе: %s\nТемпература: %.2fC° %s\nВлажность: %.0f%%\nДавление: %.0f мм.рт.ст\nВетер: %.2f м/с\nВосход солнца: %s\nЗакат солнца: %s\nПродолжительность дня: %s\nХорошего дня!",
-				time.Now().Format("2006-01-02 15:04"),/////////////////
-				city,//
-				curWeather,/
-				wd,//
-				humidity,//
-				pressure,/
-				wind,//
-				sunriseTimestamp.Format("2006-01-02 15:04:05"),/
-				sunsetTimestamp.Format("2006-01-02 15:04:05"),/
-				lengthOfDay.String(),/
-			))
-			bot.Send(msg)
+			if len(weatherData) == 0 {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Я не понимаю, попробуйте отправить название города.")
+				bot.Send(msg)
+			} else {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, weatherData)
+				bot.Send(msg)
+			}
 
 		}
 	}
