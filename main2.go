@@ -16,28 +16,29 @@ const (
 
 func GetWeather(city string, openWeatherMapAPI string) string {
 	url := "https://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + openWeatherMapAPI + "&units=metric"
-	res, err := http.Get(url)
+	res, err := http.Get(url) //отправляет запрос к url,res-ответ серв.
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Проверьте название города")
+		return ""
 
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //res.body-ответ серв,закрываем его в конце,избегая утечку данных
 
-	data := make(map[string]interface{})
-	err = json.NewDecoder(res.Body).Decode(&data)
+	data := make(map[string]interface{})          //данные из json объекта
+	err = json.NewDecoder(res.Body).Decode(&data) //декодируем данные из res.body и записываем их в data
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
-	fmt.Printf("%+v\n", data)
+	fmt.Printf("%+v\n", data) //содержимое data в консоль
 
 	city = data["name"].(string)
 	weather := data["main"].(map[string]interface{})
 	curWeather := weather["temp"].(float64)
 	weatherDescription := data["weather"].([]interface{})[0].(map[string]interface{})["main"].(string)
-	wd := ""
-	if weatherDescription, ok := codeToSmile[weatherDescription]; ok {
+	wd := ""                                                           //смайлик
+	if weatherDescription, ok := codeToSmile[weatherDescription]; ok { //если ok tr,то присваиваем
 		wd = weatherDescription
 	} else {
 		wd = "Посмотри в окно, не пойму что там за погода!"
@@ -51,16 +52,16 @@ func GetWeather(city string, openWeatherMapAPI string) string {
 	sunsetTimestamp := time.Unix(int64(data["sys"].(map[string]interface{})["sunset"].(float64)), 0)
 	lengthOfDay := sunsetTimestamp.Sub(sunriseTimestamp)
 
-	weatherData := fmt.Sprintf("***%s***\nПогода в городе: %s\nТемпература: %.2fC° %s\nВлажность: %.0f%%\nДавление: %.0f мм.рт.ст\nВетер: %.2f м/с\nВосход солнца: %s\nЗакат солнца: %s\nПродолжительность дня: %s\nХорошего дня!",
+	weatherData := fmt.Sprintf("***%s***\nПогода в городе: %s🌌\nТемпература: %.2fC°🌡 %s\nВлажность: %.0f%%💦\nДавление: %.0f мм.рт.ст\nВетер: %.2f м/с💨️\nВосход солнца: %s☀️\nЗакат солнца: %s🌇\nПродолжительность дня: %s🌍\nХорошего дня!👋",
 		time.Now().Format("2006-01-02 15:04"),
 		city,
-		curWeather,
-		wd,
-		humidity,
-		pressure,
-		wind,
-		sunriseTimestamp.Format("2006-01-02 15:04:05"),
-		sunsetTimestamp.Format("2006-01-02 15:04:05"),
+		curWeather, //темпа
+		wd,         //тип погоды
+		humidity,   //влажность
+		pressure,   //давление
+		wind,       //ветер
+		sunriseTimestamp.Format("2006-01-02 15:04:05"), //восход с
+		sunsetTimestamp.Format("2006-01-02 15:04:05"),  //закат с
 		lengthOfDay.String(),
 	)
 
